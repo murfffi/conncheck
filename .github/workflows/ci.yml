@@ -1,0 +1,46 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  e2e:
+    # Only ubuntu allows for docker support - https://docs.github.com/en/actions/using-containerized-services/about-service-containers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.26'
+
+      - name: Build
+        run: go build -v ./...
+      - name: Test
+        run: make test
+      - name: Checks
+        run: |
+          make checks
+
+#  platforms:
+#    runs-on: ${{ matrix.os }}
+#    strategy:
+#      matrix:
+#        os:
+#          - "windows-latest"
+#          - "macos-latest"
+#    steps:
+#      - uses: actions/checkout@v6
+#      - uses: actions/setup-go@v6
+#        with:
+#          go-version: '1.26'
+#      - name: Test
+#        run: make test
