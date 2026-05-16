@@ -1,4 +1,4 @@
-module github.com/sclgo/template
+module github.com/murfffi/conncheck
 
 go 1.26
 

@@ -1,2 +1,2 @@
-# template
-Go template repo
+# conncheck
+Go conncheck repo
