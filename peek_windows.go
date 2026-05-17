@@ -34,8 +34,14 @@ func tryPeek(rawConn syscall.RawConn) Status {
 			Buf: &buf[0],
 		}
 
+		// RecvFrom is a simpler alternative of WSARecv, but it sometimes returns
+		// "WSAEAFNOSUPPORT - Address family not supported by protocol family", for some reason.
 		recvErr = windows.WSARecv(h, &wsabuf, 1, &n, new(MSG_PEEK), nil, nil)
+
 		sockOptErr = windows.SetsockoptInt(h, windows.SOL_SOCKET, windows.SO_RCVTIMEO, oldTimeout)
+		// It should not be possible to get an error here if the connection is open.
+		// All documented failure reasons in https://learn.microsoft.com/en-us/windows/win32/api/winsock/nf-winsock-setsockopt
+		// mean that either the socket is closed or that the option is not supported, which would have failed earlier.
 		return true
 	})
 
@@ -48,17 +54,16 @@ func tryPeek(rawConn syscall.RawConn) Status {
 	}
 
 	if n > 0 {
-		// connection is open and there is something in the buffer
-		// recvErr should be nil here since we read something, but if it isn't,
-		// return it as processErr to invalidate the result
+		// Connection is open and there is something in the buffer. recvErr should be nil here
+		// but if it isn't, then we are unsure of the connection status.
 		if recvErr != nil {
 			return StatusUnknown
 		}
 		return StatusOpen
 	}
 
-	if errors.Is(recvErr, windows.WSAETIMEDOUT) || // if the connection is blocking
-		errors.Is(recvErr, windows.WSAEWOULDBLOCK) || // if the connection is non-blocking (unlikely)
+	if errors.Is(recvErr, windows.WSAETIMEDOUT) || // if the connection is in blocking mode (typical)
+		errors.Is(recvErr, windows.WSAEWOULDBLOCK) || // if the connection is in non-blocking mode
 		// based on example in golang/go/blob/364de84f/src/internal/poll/fd_windows.go#L1262
 		errors.Is(recvErr, windows.WSAEMSGSIZE) {
 		// connection is open and there is nothing in the buffer
