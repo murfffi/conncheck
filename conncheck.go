@@ -2,7 +2,9 @@ package conncheck
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net"
+	"strconv"
 	"syscall"
 	"time"
 )
@@ -14,6 +16,22 @@ const (
 	StatusOpen
 	StatusNotOpen
 )
+
+func (s Status) String() string {
+	res := strconv.Itoa(int(StatusUnknown))
+	switch s {
+	case StatusUnknown:
+		return res + ": StatusUnknown"
+	case StatusOpen:
+		return res + ": StatusOpen"
+	case StatusNotOpen:
+		return res + ": StatusNotOpen"
+	default:
+		return res + ": unknown"
+	}
+}
+
+var _ fmt.Stringer = StatusOpen
 
 func Do(conn net.Conn) Status {
 	if tlsConn, ok := conn.(*tls.Conn); ok {
@@ -29,7 +47,7 @@ func Do(conn net.Conn) Status {
 	rawConn, err := sc.SyscallConn()
 	if err == nil {
 		err = tryPeek(rawConn)
-	} // else eans that the system handle is not set
+	} // else means that the system handle is not set
 
 	if err != nil {
 		return StatusNotOpen
