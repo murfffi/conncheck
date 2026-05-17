@@ -48,7 +48,7 @@ func Do(conn net.Conn) Status {
 
 	if err != nil {
 		return StatusUnknown
-	} // else means that the system handle is not set
+	}
 
 	return tryPeek(rawConn)
 }

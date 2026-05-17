@@ -54,11 +54,8 @@ func tryPeek(rawConn syscall.RawConn) Status {
 	}
 
 	if n > 0 {
-		// Connection is open and there is something in the buffer. recvErr should be nil here
-		// but if it isn't, then we are unsure of the connection status.
-		if recvErr != nil {
-			return StatusUnknown
-		}
+		// NB: recvErr may not be nil even with n > 0 e.g. WSAEMSGSIZE.
+		// Still, if we read something, the connection is open.
 		return StatusOpen
 	}
 
