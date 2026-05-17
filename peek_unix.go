@@ -8,7 +8,15 @@ import (
 	"syscall"
 )
 
-func tryPeek(rawConn syscall.RawConn) (err error) {
+func tryPeek(rawConn syscall.RawConn) Status {
+	readErr := tryPeekUnix(rawConn)
+	if readErr != nil {
+		return StatusNotOpen
+	}
+	return StatusOpen
+}
+
+func tryPeekUnix(rawConn syscall.RawConn) (err error) {
 	var n int
 
 	if readErr := rawConn.Read(func(fd uintptr) bool {

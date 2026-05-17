@@ -45,16 +45,10 @@ func Do(conn net.Conn) Status {
 
 	_ = conn.SetReadDeadline(time.Time{})
 	rawConn, err := sc.SyscallConn()
-	if err == nil {
-		err = tryPeek(rawConn)
-	} // else means that the system handle is not set
 
 	if err != nil {
-		return StatusNotOpen
+		return StatusUnknown
 	}
-	return StatusOpen
-}
 
-func IsBroken(conn net.Conn) bool {
-	return Do(conn) == StatusNotOpen
+	return tryPeek(rawConn)
 }

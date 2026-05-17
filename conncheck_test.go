@@ -92,7 +92,7 @@ func testSocketConn(t *testing.T, tlsCert *tls.Certificate) {
 	} else {
 		require.NoError(t, serverConn.Close())
 	}
-	time.Sleep(time.Millisecond * 500) // wait a bit for the client to notice
+	time.Sleep(time.Millisecond * 100) // wait a bit for the client to notice
 	require.Equal(t, conncheck.StatusNotOpen, conncheck.Do(conn))
 }
 
