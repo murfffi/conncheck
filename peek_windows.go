@@ -4,36 +4,28 @@ package conncheck
 
 import (
 	"errors"
-	"io"
 	"syscall"
-	"unsafe"
 
 	"golang.org/x/sys/windows"
 )
 
 const MSG_PEEK uint32 = windows.MSG_PEEK
 
-//Use the following code to find the value of FIONBIO
-//#include <winsock.h>
-//
-//int main()
-//{
-//	printf("FIONBIO is size %u with value %ld (0x%x)\n",
-//		sizeof(FIONBIO), FIONBIO, FIONBIO);
-//}
-
-const FIONBIO uint32 = 0x8004667e
-
-func tryPeek(rawConn syscall.RawConn) (err error) {
+func tryPeek(rawConn syscall.RawConn) Status {
 	var n uint32
 
-	if readErr := rawConn.Read(func(fd uintptr) bool {
+	var recvErr, sockOptErr error
+	readErr := rawConn.Read(func(fd uintptr) bool {
 		h := windows.Handle(fd)
 
-		// TODO: find a way to do this without switching to non-blocking because
-		// it is hard to switch back - hard to tell the previous state; maybe ioctl FIONREAD
-		err = switchNonBlocking(h)
-		if err != nil {
+		var oldTimeout int
+		oldTimeout, sockOptErr = windows.GetsockoptInt(h, windows.SOL_SOCKET, windows.SO_RCVTIMEO)
+		if sockOptErr != nil {
+			return true
+		}
+
+		sockOptErr = windows.SetsockoptInt(h, windows.SOL_SOCKET, windows.SO_RCVTIMEO, 1 /* millis */)
+		if sockOptErr != nil {
 			return true
 		}
 		buf := [1]byte{}
@@ -42,40 +34,36 @@ func tryPeek(rawConn syscall.RawConn) (err error) {
 			Buf: &buf[0],
 		}
 
-		err = windows.WSARecv(h, &wsabuf, 1, &n, new(MSG_PEEK), nil, nil)
+		recvErr = windows.WSARecv(h, &wsabuf, 1, &n, new(MSG_PEEK), nil, nil)
+		sockOptErr = windows.SetsockoptInt(h, windows.SOL_SOCKET, windows.SO_RCVTIMEO, oldTimeout)
 		return true
-	}); readErr != nil {
-		return readErr
+	})
+
+	if sockOptErr != nil {
+		return StatusUnknown
+	}
+
+	if readErr != nil {
+		return StatusNotOpen
 	}
 
 	if n > 0 {
-		return nil // connection is open and there is something in the buffer
+		// connection is open and there is something in the buffer
+		// recvErr should be nil here since we read something, but if it isn't,
+		// return it as processErr to invalidate the result
+		if recvErr != nil {
+			return StatusUnknown
+		}
+		return StatusOpen
 	}
 
-	// Ignore also windows.WSAEMSGSIZE based on the example in
-	// https://github.com/golang/go/blob/364de84f/src/internal/poll/fd_windows.go#L1262
-
-	if errors.Is(err, windows.WSAEWOULDBLOCK) || errors.Is(err, windows.WSAEMSGSIZE) {
+	if errors.Is(recvErr, windows.WSAETIMEDOUT) || // if the connection is blocking
+		errors.Is(recvErr, windows.WSAEWOULDBLOCK) || // if the connection is non-blocking (unlikely)
+		// based on example in golang/go/blob/364de84f/src/internal/poll/fd_windows.go#L1262
+		errors.Is(recvErr, windows.WSAEMSGSIZE) {
 		// connection is open and there is nothing in the buffer
-		return nil
+		return StatusOpen
 	}
 
-	return io.EOF // n = 0
-}
-
-func switchNonBlocking(h windows.Handle) error {
-	nonblocking := uint32(1)
-	var r uint32
-	err := windows.WSAIoctl(
-		h,
-		FIONBIO,
-		(*byte)(unsafe.Pointer(&nonblocking)),
-		uint32(unsafe.Sizeof(nonblocking)),
-		nil,
-		0,
-		&r,
-		nil,
-		0,
-	)
-	return err
+	return StatusNotOpen // recvErr is not nil or n == 0 (EOF)
 }
