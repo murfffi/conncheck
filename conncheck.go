@@ -18,17 +18,18 @@ const (
 )
 
 func (s Status) String() string {
-	res := strconv.Itoa(int(StatusUnknown))
+	var name string
 	switch s {
 	case StatusUnknown:
-		return res + ": StatusUnknown"
+		name = "StatusUnknown"
 	case StatusOpen:
-		return res + ": StatusOpen"
+		name = "StatusOpen"
 	case StatusNotOpen:
-		return res + ": StatusNotOpen"
+		name = "StatusNotOpen"
 	default:
-		return res + ": unknown"
+		name = "unknown"
 	}
+	return fmt.Sprintf("%d: %s", int(s), name)
 }
 
 var _ fmt.Stringer = StatusOpen
