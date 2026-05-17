@@ -65,7 +65,34 @@ func testSocketConn(t *testing.T, tlsCert *tls.Certificate) {
 	require.Equal(t, conncheck.StatusOpen, conncheck.Do(conn))
 
 	serverConn := <-accepted
-	require.NoError(t, serverConn.Close())
+	go func() {
+		_, err := serverConn.Write([]byte("hello"))
+		assert.NoError(t, err)
+	}()
+
+	out := [5]byte{}
+	n, err := conn.Read(out[0:1])
+	require.NoError(t, err)
+	require.Equal(t, 1, n)
+
+	require.Equal(t, conncheck.StatusOpen, conncheck.Do(conn))
+
+	n, err = conn.Read(out[1:])
+	require.NoError(t, err)
+	require.Equal(t, 4, n)
+
+	require.Equal(t, conncheck.StatusOpen, conncheck.Do(conn))
+	require.Equal(t, "hello", string(out[:]))
+
+	if serverTLSConn, ok := serverConn.(*tls.Conn); ok {
+		// in case of TLS we need to additionally ensure that the connection closes immediately
+		tcpConn := serverTLSConn.NetConn().(*net.TCPConn)
+		require.NoError(t, tcpConn.SetLinger(0))
+		require.NoError(t, tcpConn.Close())
+	} else {
+		require.NoError(t, serverConn.Close())
+	}
+	time.Sleep(time.Millisecond * 500) // wait a bit for the client to notice
 	require.Equal(t, conncheck.StatusNotOpen, conncheck.Do(conn))
 }
 

@@ -20,6 +20,9 @@ test: tools/ts
 	go tool covdata textfmt -i=./coverage/covdata -o ./coverage/covprofile
 	go tool cover -html=./coverage/covprofile -o ./coverage/coverage.html
 
+just_test:
+	go test -v -vet=all -timeout 15m ./...
+
 .PHONY: short-test
 short-test:
 	go test -v -short ./...
