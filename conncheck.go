@@ -2,7 +2,6 @@ package conncheck
 
 import (
 	"crypto/tls"
-	"fmt"
 	"net"
 	"syscall"
 	"time"
@@ -15,23 +14,6 @@ const (
 	StatusOpen
 	StatusNotOpen
 )
-
-func (s Status) String() string {
-	var name string
-	switch s {
-	case StatusUnknown:
-		name = "StatusUnknown"
-	case StatusOpen:
-		name = "StatusOpen"
-	case StatusNotOpen:
-		name = "StatusNotOpen"
-	default:
-		name = "unknown"
-	}
-	return fmt.Sprintf("%d: %s", int(s), name)
-}
-
-var _ fmt.Stringer = StatusOpen
 
 func Do(conn net.Conn) Status {
 	if tlsConn, ok := conn.(*tls.Conn); ok {
