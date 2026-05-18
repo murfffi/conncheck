@@ -12,7 +12,6 @@ on:
 jobs:
 
   e2e:
-    # Only ubuntu allows for docker support - https://docs.github.com/en/actions/using-containerized-services/about-service-containers
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -35,7 +34,8 @@ jobs:
     strategy:
       matrix:
         os:
-          - "windows-latest"
+          - "windows-2025"
+          - "windows-2022"
           - "macos-latest"
     steps:
       - uses: actions/checkout@v6
@@ -44,3 +44,16 @@ jobs:
           go-version: '1.26'
       - name: Test
         run: go test -v -vet=all -timeout 15m ./...
+
+  other-go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.25'
+
+      - name: Test
+        run: make test

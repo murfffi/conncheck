@@ -43,7 +43,7 @@ func tryPeek(rawConn syscall.RawConn) Status {
 
 		flags := uint32(windows.MSG_PEEK)
 		// We model this call on the one in go/internal/poll/fd_windows.go#FD.RawRead
-		recvErr = windows.WSARecv(h, &wsabuf, 1, &n, &flags, nil, nil)
+		recvErr = windows.WSARecv(h, &wsabuf, 1 /* number of buffers */, &n, &flags, nil, nil)
 
 		sockOptResetErr = windows.SetsockoptInt(h, windows.SOL_SOCKET, windows.SO_RCVTIMEO, oldTimeout)
 		// It should not be possible to get an error here if the connection is open.
