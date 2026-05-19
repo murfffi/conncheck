@@ -24,43 +24,60 @@ func TestDo(t *testing.T) {
 		tlsCert := randomTLSCertificate(t)
 		testSocketConn(t, tlsCert)
 	})
+	t.Run("clientClose", testClientClose)
+	t.Run("UDP", testUDP)
 }
 
-func testSocketConn(t *testing.T, tlsCert *tls.Certificate) {
-
-	accepted := make(chan net.Conn)
-
-	ln, err := net.Listen("tcp", "localhost:0")
-	require.NoError(t, err)
+func testClientClose(t *testing.T) {
+	accepted, ln := createServer(t, nil)
 	defer func() {
 		assert.NoError(t, ln.Close())
 	}()
 
-	if tlsCert != nil {
-		ln = tls.NewListener(ln, &tls.Config{Certificates: []tls.Certificate{*tlsCert}})
-	}
-	go func() {
-		for {
-			cn, err := ln.Accept()
-			if err != nil {
-				// This is usually caused by Listener being
-				// closed, not really an error.
-				t.Log("accept goroutine completed")
-				return
-			}
-			accepted <- cn
-		}
+	conn, err := net.Dial("tcp", ln.Addr().String())
+	require.NoError(t, err)
+
+	defer func() {
+		_ = conn.Close()
+	}()
+	<-accepted
+
+	require.Equal(t, conncheck.StatusOpen, conncheck.Do(conn))
+
+	require.NoError(t, conn.Close())
+	require.Equal(t, conncheck.StatusNotOpen, conncheck.Do(conn))
+}
+
+func testUDP(t *testing.T) {
+	conn, err := net.Dial("udp", "localhost:12345")
+	require.NoError(t, err)
+	defer func() {
+		_ = conn.Close()
+	}()
+	require.Equal(t, conncheck.StatusOpen, conncheck.Do(conn))
+	require.NoError(t, conn.Close())
+	require.Equal(t, conncheck.StatusNotOpen, conncheck.Do(conn))
+}
+
+func testSocketConn(t *testing.T, tlsCert *tls.Certificate) {
+
+	accepted, ln := createServer(t, tlsCert)
+	defer func() {
+		assert.NoError(t, ln.Close())
 	}()
 
 	conn, err := net.Dial("tcp", ln.Addr().String())
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+
 	if tlsCert != nil {
 		conn = tls.Client(conn, &tls.Config{
 			InsecureSkipVerify: true,
 		})
 	}
+	defer func() {
+		// connection may be closed at this point
+		_ = conn.Close()
+	}()
 
 	require.Equal(t, conncheck.StatusOpen, conncheck.Do(conn))
 
@@ -94,6 +111,30 @@ func testSocketConn(t *testing.T, tlsCert *tls.Certificate) {
 	}
 	time.Sleep(time.Millisecond * 100) // wait a bit for the client to notice
 	require.Equal(t, conncheck.StatusNotOpen, conncheck.Do(conn))
+}
+
+func createServer(t *testing.T, tlsCert *tls.Certificate) (chan net.Conn, net.Listener) {
+	accepted := make(chan net.Conn)
+
+	ln, err := net.Listen("tcp", "localhost:0")
+	require.NoError(t, err)
+
+	if tlsCert != nil {
+		ln = tls.NewListener(ln, &tls.Config{Certificates: []tls.Certificate{*tlsCert}})
+	}
+	go func() {
+		for {
+			cn, err := ln.Accept()
+			if err != nil {
+				// This is usually caused by Listener being
+				// closed, not really an error.
+				t.Log("accept goroutine completed")
+				return
+			}
+			accepted <- cn
+		}
+	}()
+	return accepted, ln
 }
 
 func randomTLSCertificate(t *testing.T) *tls.Certificate {
