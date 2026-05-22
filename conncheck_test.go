@@ -41,7 +41,9 @@ func testClientClose(t *testing.T) {
 		_ = conn.Close()
 	}()
 	sconn := <-accepted
-	defer sconn.Close()
+	defer func() {
+		_ = sconn.Close()
+	}()
 
 	require.Equal(t, conncheck.StatusOpen, conncheck.Do(conn))
 
