@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net"
 	"syscall"
-	"time"
 )
 
 type Status int
@@ -26,13 +25,6 @@ func Do(conn net.Conn) Status {
 	if !ok {
 		// This happens on WASM
 		return StatusUnknown
-	}
-
-	// we need to reset the deadline for the checks to work
-	err := conn.SetReadDeadline(time.Time{})
-	if err != nil {
-		// only happens if closing
-		return StatusNotOpen
 	}
 
 	rawConn, err := sc.SyscallConn()
