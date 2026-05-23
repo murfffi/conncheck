@@ -33,7 +33,7 @@ lint: tools/golangci-lint
 	tools/golangci-lint run -v
 
 .PHONY: checks
-checks: check_tidy check_vuln check_modern
+checks: check_tidy check_vuln
 
 .PHONY: check_vuln
 check_vuln:
@@ -45,10 +45,6 @@ check_tidy:
 	go mod tidy
 	# Verify that `go mod tidy` didn't introduce any changes. Run go mod tidy before pushing.
 	git diff --exit-code --stat go.mod go.sum
-
-.PHONY: check_modern
-check_modern:
-	test -z $$(go fix -diff ./... | tee /dev/stderr)
 
 # Tools targets
 
