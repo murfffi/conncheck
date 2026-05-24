@@ -3,7 +3,7 @@
 conncheck implements robust, fast, and reusable network connection liveness check in Go.
 Essentially, `conncheck.Do` implements the missing `net.Conn.IsOpen()` method that tells you
 if the connection has been closed on the client, was interrupted by network infrastructure, 
-or the server asked to close it, e.g. with an RST or FIN packet in case of TCP.
+or the server asked to close it e.g., with an RST or FIN packet in case of TCP.
 
 `conncheck` is useful in any network application with long-lived, sometimes idle, connections
 like SQL connection pools, Apache Thrift clients, etc.
@@ -30,9 +30,15 @@ the ping takes the time of a full round-trip and consumes precious server resour
 `conncheck` peeks without blocking from the connection at OS level. If the OS kernel is aware
 of the connection being closed or interrupted, by either peer, it will reject the peek.
 
-The Github team first documented the general approach in [a blog post](https://github.blog/engineering/three-bugs-in-the-go-mysql-driver/)
-and a fix in the MySQL Go SQL driver. The approach was later borrowed by other libraries that use
-long-lived connections like [Apache Thrift](https://github.com/apache/thrift/pull/2153).
+The Github team first documented the general approach in 
+[a blog post](https://github.blog/engineering/three-bugs-in-the-go-mysql-driver/)
+The approach was later borrowed by other libraries that use  long-lived connections 
+like [Apache Thrift](https://github.com/apache/thrift/pull/2153).
 
 Unlike existing solutions, `conncheck` is reusable and supports both Unix systems and Windows.
-PRs will be opened, using this code, for the OSS projects with existing limited solutions. 
+PRs will be opened, using this code, for the OSS projects with existing limited solutions.
+
+## Copyright and acknowledgements
+
+This library is licensed under the Apache 2 license. All code was written from scratch. The Unix code
+used the Apache Thrift implementation as a reference, while the Windows code is completely novel. 
