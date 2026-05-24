@@ -6,7 +6,10 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"errors"
+	"fmt"
 	"net"
+	"syscall"
 	"testing"
 	"time"
 
@@ -26,7 +29,36 @@ func TestDo(t *testing.T) {
 	})
 	t.Run("clientClose", testClientClose)
 	t.Run("UDP", testUDP)
+	t.Run("unsupported", testUnsupported)
 }
+
+func testUnsupported(t *testing.T) {
+	for err, res := range map[error]conncheck.Status{
+		syscall.EINVAL:      conncheck.StatusNotOpen,
+		net.ErrClosed:       conncheck.StatusNotOpen,
+		errors.New("other"): conncheck.StatusUnknown,
+		nil:                 conncheck.StatusUnknown} {
+		t.Run("syscall.Conn error "+fmt.Sprint(err), func(t *testing.T) {
+			conn := unsupportedConn{syscallConnErr: err}
+			require.Equal(t, res, conncheck.Do(conn))
+		})
+	}
+}
+
+type unsupportedConn struct {
+	net.Conn
+
+	syscallConnErr error
+}
+
+func (u unsupportedConn) SyscallConn() (syscall.RawConn, error) {
+	return nil, u.syscallConnErr
+}
+
+var _ interface {
+	net.Conn
+	syscall.Conn
+} = unsupportedConn{}
 
 func testClientClose(t *testing.T) {
 	accepted, ln := createServer(t, nil)

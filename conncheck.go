@@ -40,7 +40,7 @@ func Do(conn net.Conn) Status {
 	}
 
 	rawConn, err := sc.SyscallConn()
-	if err != nil {
+	if err != nil || rawConn == nil {
 		if errors.Is(err, syscall.EINVAL) || errors.Is(err, net.ErrClosed) {
 			return StatusNotOpen
 		}

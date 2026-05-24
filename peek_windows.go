@@ -55,14 +55,25 @@ func tryPeek(rawConn syscall.RawConn) Status {
 		return true // escape out of the RawConn.Read loop
 	})
 
+	if readErr != nil {
+		// The read was rejected
+		// The only possible reason was that the connection was just closed on this side.
+		return StatusNotOpen
+	}
+
 	if sockOptErr != nil {
 		// We couldn't set the timeout and do the check.
+		// TODO: Determine if the reason is that the socket is closed and return NotOpen in that case
 		return StatusUnknown
 	}
 
-	if readErr != nil {
+	if sockOptResetErr != nil {
+		// The turning the timeout back didn't work.
+		// The only possible reason was that the connection was just closed on this side.
 		return StatusNotOpen
 	}
+
+	// readErr, sockOptErr, sockOptResetErr are nil - test finished
 
 	if n > 0 || // we peeked something,
 		// or there was nothing in the buffer, which is indicated by n == 0 and either:
@@ -73,14 +84,8 @@ func tryPeek(rawConn syscall.RawConn) Status {
 		// connection is open and there is nothing in the buffer
 		// recvErr may not be nil even with n > 0. Still, if we read something, the connection is open.
 
-		if sockOptResetErr != nil {
-			// The socket was open, but turning the timeout back didn't work.
-			// The only possible reason was that the connection was just closed on this side.
-			return StatusNotOpen
-		}
-
 		return StatusOpen
 	}
 
-	return StatusNotOpen // recvErr is not nil or n == 0 with recvErr == nil which means EOF
+	return StatusNotOpen // recvErr is not a timeout, or n == 0 && recvErr == nil, which means EOF
 }
