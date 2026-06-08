@@ -25,8 +25,7 @@ just-test:
 
 test-wasm:
 # https://go.dev/wiki/WebAssembly#executing-webassembly-with-nodejs
-	export PATH="$$PATH:$$(go env GOROOT)/lib/wasm"
-	GOOS=js GOARCH=wasm go test -timeout 15m ./...
+	PATH="$$PATH:$$(go env GOROOT)/lib/wasm" GOOS=js GOARCH=wasm go test -timeout 15m ./...
 
 .PHONY: short-test
 short-test:
