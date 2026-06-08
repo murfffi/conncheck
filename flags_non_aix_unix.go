@@ -1,4 +1,4 @@
-//go:build !windows && !aix
+//go:build unix && !aix
 
 package conncheck
 

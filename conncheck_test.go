@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"runtime"
 	"syscall"
 	"testing"
 	"time"
@@ -19,6 +20,13 @@ import (
 )
 
 func TestDo(t *testing.T) {
+	switch runtime.GOOS {
+	case "windows":
+	case "linux":
+	case "darwin":
+	default:
+		t.Skip("not supported on this platform")
+	}
 
 	t.Run("plain", func(t *testing.T) {
 		testSocketConn(t, nil)

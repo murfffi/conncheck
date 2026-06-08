@@ -20,8 +20,13 @@ test: tools/ts
 	go tool covdata textfmt -i=./coverage/covdata -o ./coverage/covprofile
 	go tool cover -html=./coverage/covprofile -o ./coverage/coverage.html
 
-just_test:
+just-test:
 	go test -v -vet=all -timeout 15m ./...
+
+test-wasm:
+# https://go.dev/wiki/WebAssembly#executing-webassembly-with-nodejs
+	export PATH="$$PATH:$$(go env GOROOT)/lib/wasm"
+	GOOS=js GOARCH=wasm go test -timeout 15m ./...
 
 .PHONY: short-test
 short-test:

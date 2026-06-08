@@ -24,7 +24,9 @@ jobs:
       - name: Build
         run: go build -v ./...
       - name: Test
-        run: make test
+        run: |
+          make test
+          make test-wasm
       - name: Checks
         run: |
           make checks
