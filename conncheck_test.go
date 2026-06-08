@@ -20,11 +20,7 @@ import (
 )
 
 func TestDo(t *testing.T) {
-	switch runtime.GOOS {
-	case "windows":
-	case "linux":
-	case "darwin":
-	default:
+	if runtime.GOOS != "windows" && !IsUnix {
 		t.Skip("not supported on this platform")
 	}
 
