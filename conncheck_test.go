@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"runtime"
 	"syscall"
 	"testing"
 	"time"
@@ -19,6 +20,9 @@ import (
 )
 
 func TestDo(t *testing.T) {
+	if runtime.GOOS != "windows" && !IsUnix {
+		t.Skip("not supported on this platform")
+	}
 
 	t.Run("plain", func(t *testing.T) {
 		testSocketConn(t, nil)
