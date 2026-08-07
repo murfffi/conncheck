@@ -9,7 +9,6 @@ or the server asked to close it e.g., with an RST or FIN packet in case of TCP.
 like SQL connection pools, Apache Thrift clients, etc.
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/murfffi/conncheck.svg)](https://pkg.go.dev/github.com/murfffi/conncheck)
-[![Go Report Card](https://goreportcard.com/badge/github.com/murfffi/conncheck)](https://goreportcard.com/report/github.com/murfffi/conncheck)
 [![Tests](https://github.com/murfffi/conncheck/actions/workflows/ci.yml/badge.svg)](https://coveralls.io/github/murfffi/conncheck)
 
 ## Quickstart
