@@ -21,6 +21,8 @@ func IsBroken(conn net.Conn) bool {
 }
 ```
 
+Checkout the [examples](./examples) too.
+
 ## How it works
 
 `conncheck` builds on network liveness checks implemented in some Go SQL drivers, replacing
@@ -31,13 +33,14 @@ of the connection being closed or interrupted, by either peer, it will reject th
 
 The Github team first documented the general approach in 
 [a blog post](https://github.blog/engineering/three-bugs-in-the-go-mysql-driver/)
-The approach was later borrowed by other libraries that use  long-lived connections 
+The approach was later borrowed by other libraries that use long-lived connections 
 like [Apache Thrift](https://github.com/apache/thrift/pull/2153).
 
 Unlike existing solutions, `conncheck` is reusable and supports both Unix systems and Windows.
-PRs will be opened, using this code, for the OSS projects with existing limited solutions.
 
-## Copyright and acknowledgements
+## Copyright, AI use, and acknowledgements
 
 This library is licensed under the Apache 2 license. All code was written from scratch. The Unix code
-used the Apache Thrift implementation as a reference, while the Windows code is completely novel. 
+used the Apache Thrift implementation as a reference, while the Windows code is completely novel.
+
+Gemini contributed troubleshooting of OS API calls, especially on Windows.
