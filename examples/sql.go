@@ -1,5 +1,10 @@
 package examples
 
+// If you are writing a Go SQL driver that uses long-lived TCP connections to talk the database server,
+// conncheck makes it easy and fast to implement the connection validation required by the
+// database/sql/driver SPI.
+// github.com/sclgo/impala-go is a driver that uses conncheck this way.
+
 import (
 	"context"
 	"database/sql/driver"
@@ -23,24 +28,3 @@ func (d *driverConn) ResetSession(context.Context) error {
 	}
 	return nil
 }
-
-// conncheck can also be used in the popular Postgres Go driver - pgx.
-// The following code is commented to avoid adding a dependency to pgx itself .
-
-//import (
-//	"context"
-//	"database/sql/driver"
-//
-//	"github.com/jackc/pgx/v5"
-//	"github.com/jackc/pgx/v5/stdlib"
-//	"github.com/murfffi/conncheck"
-//)
-//
-//func pgxExample() driver.Connector {
-//	return stdlib.GetConnector(pgx.ConnConfig{}, stdlib.OptionResetSession(func(_ context.Context, conn *pgx.Conn) error {
-//		if conncheck.Do(conn.PgConn().Conn()) == conncheck.StatusNotOpen {
-//			return driver.ErrBadConn
-//		}
-//		return nil
-//	}))
-//}
